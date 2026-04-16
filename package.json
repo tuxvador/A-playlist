@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "parse-playlists": "node scripts/parse-playlists.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

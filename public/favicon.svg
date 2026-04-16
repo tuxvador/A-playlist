@@ -1,13 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="African Music Map Icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="African Music Map">
   <defs>
-    <linearGradient id="apGradient" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#34d399" />
-      <stop offset="100%" stop-color="#38bdf8" />
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
     </linearGradient>
+    <linearGradient id="wave" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="64" height="64" rx="16" fill="#0f172a" />
-  <path d="M18 46L28 18H36L46 46" fill="none" stroke="url(#apGradient)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M43 22v18" fill="none" stroke="url(#apGradient)" stroke-width="6" stroke-linecap="round" />
-  <path d="M30 46v-8h10" fill="none" stroke="url(#apGradient)" stroke-width="6" stroke-linecap="round" />
-  <path d="M26 46v-12h4" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="14" fill="#08080f"/>
+
+  <!-- Subtle glow -->
+  <rect width="64" height="64" rx="14" fill="url(#glow)"/>
+
+  <!-- Music note (gold) -->
+  <ellipse cx="28" cy="38" rx="4" ry="2.8" transform="rotate(-18 28 38)" fill="url(#gold)"/>
+  <line x1="31.5" y1="37" x2="31.5" y2="23" stroke="url(#gold)" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M31.5,23 Q39,27 35,33" fill="none" stroke="url(#gold)" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- Sound waves (emerald) -->
+  <path d="M 40,28 Q 44,31 40,34" fill="none" stroke="url(#wave)" stroke-width="2" stroke-linecap="round"/>
+  <path d="M 43,25 Q 49,31 43,37" fill="none" stroke="url(#wave)" stroke-width="1.8" stroke-linecap="round" opacity="0.65"/>
 </svg>
