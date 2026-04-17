@@ -26,10 +26,14 @@ export async function POST(request: Request, { params }: { params: { country: st
     return NextResponse.json({ error: "Unknown country." }, { status: 400 });
   }
 
-  const releaseYear = new Date().getFullYear();
-  const yearsSinceRelease = new Date().getFullYear() - releaseYear;
+  const currentYear = new Date().getFullYear();
+  const parsedYear = parseInt(String(body.releaseYear || ""), 10);
+  const releaseYear = !isNaN(parsedYear) && parsedYear >= 1900 && parsedYear <= currentYear
+    ? parsedYear
+    : currentYear;
+  const yearsSinceRelease = currentYear - releaseYear;
   const decade = `${Math.floor(releaseYear / 10) * 10}s`;
-  const status = "Current release";
+  const status = releaseYear >= currentYear - 1 ? "Current release" : "Classic";
 
   const entry = await prisma.entry.create({
     data: {
@@ -49,16 +53,29 @@ export async function POST(request: Request, { params }: { params: { country: st
 }
 
 export async function GET(request: Request, { params }: { params: { country: string } }) {
+  const session = getSessionUser(request);
+  const userId = session?.userId ?? -1;
+
   const countryRecord = africanCountries.find((item) => item.slug === params.country);
   if (!countryRecord) {
     return NextResponse.json({ error: "Unknown country." }, { status: 400 });
   }
 
-  const entries = await prisma.entry.findMany({
+  const rawEntries = await prisma.entry.findMany({
     where: { country: params.country },
-    include: { user: { select: { username: true } } },
-    orderBy: { createdAt: "desc" },
+    include: {
+      user: { select: { username: true } },
+      _count: { select: { votes: true } },
+      votes: { where: { userId }, select: { id: true } },
+    },
+    orderBy: { votes: { _count: "desc" } },
   });
+
+  const entries = rawEntries.map(({ _count, votes, ...e }) => ({
+    ...e,
+    voteCount: _count.votes,
+    userVoted: votes.length > 0,
+  }));
 
   return NextResponse.json({ country: countryRecord, entries });
 }
