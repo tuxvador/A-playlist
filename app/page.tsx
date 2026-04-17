@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { africanCountries } from "../lib/countries";
 import { countryPlaylists } from "../lib/countryPlaylists";
 import { LANGUAGES, t, type Lang } from "../lib/i18n";
+import { localizedCountryName } from "../lib/countryNames";
 
 function flagFromCode(code: string) {
   return code
@@ -336,9 +337,9 @@ export default function Page() {
         const aHas = a.entries.length > 0 || (countryPlaylists[a.slug]?.length ?? 0) > 0 ? 1 : 0;
         const bHas = b.entries.length > 0 || (countryPlaylists[b.slug]?.length ?? 0) > 0 ? 1 : 0;
         if (aHas !== bHas) return bHas - aHas;
-        return a.name.localeCompare(b.name);
+        return localizedCountryName(a.slug, a.name, lang).localeCompare(localizedCountryName(b.slug, b.name, lang));
       }),
-    [countries],
+    [countries, lang],
   );
 
   return (
@@ -361,7 +362,7 @@ export default function Page() {
               <div className="auth-summary-row">
                 <div>
                   <p className="auth-username">{user.username}</p>
-                  <p className="auth-meta">{tr.country}: {user.country}</p>
+                  <p className="auth-meta">{tr.country}: {localizedCountryName(user.country, africanCountries.find((c) => c.slug === user.country)?.name ?? user.country, lang)}</p>
                   <span className={`chip ${user.isAdmin ? "admin" : "standard"}`}>
                     {user.isAdmin ? tr.admin : tr.standardUser}
                   </span>
@@ -427,7 +428,7 @@ export default function Page() {
                         ) : (
                           <>
                             <div className="my-contrib-track"><strong>{entry.artist}</strong> — {entry.song}</div>
-                            <div className="my-contrib-meta">{country.name} · ▲ {entry.voteCount}</div>
+                            <div className="my-contrib-meta">{localizedCountryName(country.slug, country.name, lang)} · ▲ {entry.voteCount}</div>
                           </>
                         )}
                       </div>
@@ -478,9 +479,11 @@ export default function Page() {
                   {tr.country}
                   <select className="input-field" value={form.country} onChange={(e) => updateForm("country", e.target.value)} required>
                     <option value="">{tr.selectCountry}</option>
-                    {africanCountries.map((c) => (
-                      <option key={c.slug} value={c.slug}>{flagFromCode(c.code)} {c.name}</option>
-                    ))}
+                    {[...africanCountries]
+                      .sort((a, b) => localizedCountryName(a.slug, a.name, lang).localeCompare(localizedCountryName(b.slug, b.name, lang)))
+                      .map((c) => (
+                        <option key={c.slug} value={c.slug}>{flagFromCode(c.code)} {localizedCountryName(c.slug, c.name, lang)}</option>
+                      ))}
                   </select>
                 </label>
               )}
@@ -521,7 +524,7 @@ export default function Page() {
                 <button type="button" className="country-toggle" onClick={() => toggleCountry(country.slug)} aria-expanded={isOpen}>
                   <span className="country-flag" aria-hidden="true">{flagFromCode(country.code)}</span>
                   <span className="country-info">
-                    <span className="country-name">{country.name}</span>
+                    <span className="country-name">{localizedCountryName(country.slug, country.name, lang)}</span>
                     <span className="country-count">
                       {hasData ? (
                         <><strong>{totalCount}</strong>{" "}{totalCount === 1 ? tr.track : tr.tracks}</>
@@ -566,81 +569,68 @@ export default function Page() {
                     )}
 
                     {dbEntries.length > 0 && (
-
                       <div className="entries-section">
                         <div className="entries-section-header">
                           <h3 className="entries-section-title">{tr.communityEntriesTitle}</h3>
                           <span className="playlist-count">{dbEntries.length} {tr.songs}</span>
                         </div>
-                        <div style={{ overflowX: "auto" }}>
-                          <table>
-                            <thead>
-                              <tr>
-                                <th>{tr.artist}</th>
-                                <th>{tr.song}</th>
-                                <th>{tr.year}</th>
-                                <th>{tr.addedBy}</th>
-                                <th>{tr.votes}</th>
-                                <th>{tr.listen}</th>
-                                {user && <th></th>}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {dbEntries.map((entry) => {
-                                const canEdit = user && (user.username === entry.user.username || user.isAdmin);
-                                const isEditing = editingEntry?.id === entry.id;
-                                return (
-                                  <tr key={entry.id}>
-                                    <td data-label={tr.artist}>
-                                      {isEditing
-                                        ? <input className="input-field inline-edit" value={editingEntry.artist} onChange={(e) => setEditingEntry((prev) => prev && { ...prev, artist: e.target.value })} />
-                                        : entry.artist}
-                                    </td>
-                                    <td data-label={tr.song}>
-                                      {isEditing
-                                        ? <input className="input-field inline-edit" value={editingEntry.song} onChange={(e) => setEditingEntry((prev) => prev && { ...prev, song: e.target.value })} />
-                                        : entry.song}
-                                    </td>
-                                    <td data-label={tr.year}>{entry.releaseYear || "—"}</td>
-                                    <td data-label={tr.addedBy}>{entry.user.username}</td>
-                                    <td data-label={tr.votes}>
-                                      <button
-                                        type="button"
-                                        className={`vote-btn${entry.userVoted ? " voted" : ""}`}
-                                        onClick={() => handleDbVote(country.slug, entry.id)}
-                                        title={tr.vote}
-                                      >
-                                        ▲ {entry.voteCount}
-                                      </button>
-                                    </td>
-                                    <td data-label={tr.listen}>
-                                      <MusicLinks artist={isEditing ? editingEntry.artist : entry.artist} song={isEditing ? editingEntry.song : entry.song} />
-                                    </td>
-                                    {user && (
-                                      <td data-label="">
-                                        {canEdit && (
-                                          <div className="entry-row-actions">
-                                            {isEditing ? (
-                                              <>
-                                                <button type="button" className="row-action-btn save" onClick={() => handleEntryEdit(country.slug)}>{tr.save}</button>
-                                                <button type="button" className="row-action-btn cancel" onClick={() => setEditingEntry(null)}>{tr.cancel}</button>
-                                              </>
-                                            ) : (
-                                              <>
-                                                <button type="button" className="row-action-btn edit" onClick={() => setEditingEntry({ id: entry.id, artist: entry.artist, song: entry.song })}>{tr.edit}</button>
-                                                <button type="button" className="row-action-btn delete" onClick={() => handleEntryDelete(country.slug, entry.id)}>{tr.delete}</button>
-                                              </>
-                                            )}
-                                          </div>
-                                        )}
-                                      </td>
+                        <ul className="community-list">
+                          {dbEntries.map((entry) => {
+                            const canEdit = user && (user.username === entry.user.username || user.isAdmin);
+                            const isEditing = editingEntry?.id === entry.id;
+                            return (
+                              <li key={entry.id}>
+                                <div className="track-row">
+                                  <div className="track-info">
+                                    {isEditing ? (
+                                      <div className="community-edit">
+                                        <input className="input-field inline-edit" value={editingEntry.artist} onChange={(e) => setEditingEntry((prev) => prev && { ...prev, artist: e.target.value })} placeholder={tr.artist}/>
+                                        <input className="input-field inline-edit" value={editingEntry.song} onChange={(e) => setEditingEntry((prev) => prev && { ...prev, song: e.target.value })} placeholder={tr.song}/>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <div>
+                                          <span className="playlist-artist">{entry.artist}</span>
+                                          <span style={{ color: "var(--muted)" }}> — </span>
+                                          <span className="playlist-song">{entry.song}</span>
+                                        </div>
+                                        <div className="community-meta">
+                                          {entry.releaseYear ? `${entry.releaseYear} · ` : ""}{entry.user.username}
+                                        </div>
+                                      </>
                                     )}
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
+                                  </div>
+                                  <div className="track-actions">
+                                    <button
+                                      type="button"
+                                      className={`vote-btn${entry.userVoted ? " voted" : ""}`}
+                                      onClick={() => handleDbVote(country.slug, entry.id)}
+                                      title={tr.vote}
+                                    >
+                                      ▲ {entry.voteCount}
+                                    </button>
+                                    <MusicLinks artist={isEditing ? editingEntry.artist : entry.artist} song={isEditing ? editingEntry.song : entry.song} />
+                                  </div>
+                                </div>
+                                {canEdit && (
+                                  <div className="entry-row-actions community-actions">
+                                    {isEditing ? (
+                                      <>
+                                        <button type="button" className="row-action-btn save" onClick={() => handleEntryEdit(country.slug)}>{tr.save}</button>
+                                        <button type="button" className="row-action-btn cancel" onClick={() => setEditingEntry(null)}>{tr.cancel}</button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <button type="button" className="row-action-btn edit" onClick={() => setEditingEntry({ id: entry.id, artist: entry.artist, song: entry.song })}>{tr.edit}</button>
+                                        <button type="button" className="row-action-btn delete" onClick={() => handleEntryDelete(country.slug, entry.id)}>{tr.delete}</button>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+                              </li>
+                            );
+                          })}
+                        </ul>
                       </div>
                     )}
 
@@ -685,7 +675,7 @@ export default function Page() {
 
                     {fileEntries.length === 0 && dbEntries.length === 0 && (
                       <p style={{ color: "var(--muted)", fontSize: "0.88rem", margin: "16px 0 0" }}>
-                        {tr.noEntriesYet(country.name)}
+                        {tr.noEntriesYet(localizedCountryName(country.slug, country.name, lang))}
                       </p>
                     )}
                   </div>

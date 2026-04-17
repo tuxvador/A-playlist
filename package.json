@@ -12,12 +12,15 @@
     "parse-playlists": "node scripts/parse-playlists.mjs"
   },
   "dependencies": {
+    "@prisma/client": "^5.14.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "next": "14.2.5",
+    "pdfkit": "^0.18.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "@prisma/client": "^5.14.0"
+    "spotify-url-info": "^3.3.0",
+    "spotify-web-api-node": "^5.0.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.2",
